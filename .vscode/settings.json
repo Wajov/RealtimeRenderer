@@ -1,0 +1,9 @@
+{
+    "cmake.buildDirectory" : "${workspaceFolder}/build/${buildType}",
+    "cmake.debugConfig": {
+        "cwd": "${workspaceFolder}"
+    },
+    "files.associations": {
+        "xiosbase": "cpp"
+    },
+}
