@@ -8,13 +8,7 @@ constexpr int HEIGHT = 1080;
 
 int main() {
     Renderer renderer(WIDTH, HEIGHT);
-
-    try {
-        renderer.Run();
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
+    renderer.Run();
 
     return EXIT_SUCCESS;
 }

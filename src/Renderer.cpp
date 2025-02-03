@@ -1,6 +1,6 @@
 #include "Renderer.hpp"
 
-#include <stdexcept>
+#include "VulkanHelper.hpp"
 
 Renderer::Renderer(int width, int height) :
     width_(width),
@@ -48,9 +48,7 @@ void Renderer::CreateInstance()
 
     createInfo.enabledLayerCount = 0;
 
-    if (vkCreateInstance(&createInfo, nullptr, &instance_) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create instance!");
-    }
+    VULKAN_CHECK(vkCreateInstance(&createInfo, nullptr, &instance_));
 }
 
 void Renderer::InitVulkan()
