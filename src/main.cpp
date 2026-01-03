@@ -3,8 +3,8 @@
 
 #include "Renderer.hpp"
 
-constexpr int WIDTH = 1920;
-constexpr int HEIGHT = 1080;
+constexpr uint32_t WIDTH = 1920;
+constexpr uint32_t HEIGHT = 1080;
 
 int main() {
     Renderer renderer(WIDTH, HEIGHT);
