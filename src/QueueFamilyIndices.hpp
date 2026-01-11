@@ -3,19 +3,14 @@
 
 #include <cstdint>
 
-class QueueFamilyIndices {
-public:
-    QueueFamilyIndices();
-    ~QueueFamilyIndices() = default;
-    void SetGraphicsFamilyIndex(int32_t graphicsFamilyIndex);
-    int32_t GetGraphicsFamilyIndex() const;
-    void SetPresentFamilyIndex(int32_t presentFamilyIndex);
-    int32_t GetPresentFamilyIndex() const;
-    bool IsComplete() const;
+struct QueueFamilyIndices {
+    int32_t graphicsFamilyIndex = -1;
+    int32_t presentFamilyIndex = -1;
 
-private:
-    int32_t graphicsFamilyIndex_;
-    int32_t presentFamilyIndex_;
+    bool IsComplete() const
+    {
+        return graphicsFamilyIndex >= 0 && presentFamilyIndex >= 0;
+    }
 };
 
 #endif
