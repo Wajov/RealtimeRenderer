@@ -1,15 +1,16 @@
-#ifndef APPLICATION_HPP
-#define APPLICATION_HPP
+#ifndef RENDERER_HPP
+#define RENDERER_HPP
 
 #include <cstdint>
 #include <string>
 #include <vector>
 
 #include <GLFW/glfw3.h>
-#include <vulkan/vulkan.h>
 
 #include "QueueFamilyIndices.hpp"
 #include "SwapchainSupportDetails.hpp"
+#include "Vertex.hpp"
+#include "VulkanHelper.hpp"
 
 class Renderer {
 public:
@@ -30,6 +31,11 @@ private:
     const std::vector<const char*> SWAPCHAIN_EXTENSIONS = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
+    const std::vector<Vertex> VERTICES = {
+        {{0.0f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+        {{-0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}}
+    };
 
     uint32_t width_, height_;
     GLFWwindow* window_;
@@ -38,6 +44,7 @@ private:
     VkSurfaceKHR surface_;
     VkPhysicalDevice physicalDevice_;
     VkDevice device_;
+    VmaAllocator allocator_;
     VkQueue graphicsQueue_, presentQueue_;
     VkSwapchainKHR swapchain_;
     VkFormat swapchainImageFormat_;
@@ -51,11 +58,15 @@ private:
     std::vector<VkFramebuffer> swapchainFramebuffers_;
     VkCommandPool commandPool_;
     std::vector<VkCommandBuffer> commandBuffers_;
+    VkBuffer vertexBuffer_;
+    VmaAllocation vertexBufferAllocation_;
     std::vector<VkSemaphore> imageAvailableSemaphores_, renderFinishedSemaphores_;
     std::vector<VkFence> inFlightFences_;
     uint32_t currentFrame_ = 0;
+    bool framebufferResized_ = false;
 
     void InitWindow();
+    static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
     void InitVulkan();
     void CreateInstance();
     bool CheckValidationLayerSupport();
@@ -76,6 +87,7 @@ private:
     SwapchainSupportDetails QuerySwapchainSupport(VkPhysicalDevice device);
     QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
     void CreateDevice();
+    void CreateMemoryAllocator();
     void CreateSwapchain();
     VkExtent2D ChooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     VkSurfaceFormatKHR ChooseSwapchainFormat(const std::vector<VkSurfaceFormatKHR>& formats);
@@ -88,9 +100,12 @@ private:
     void CreateFramebuffers();
     void CreateCommandPool();
     void CreateCommandBuffers();
+    void CreateVertexBuffer();
     void CreateSyncObjects();
     void MainLoop();
     void DrawFrame();
+    void RecreateSwapchain();
+    void CleanupSwapchain();
     void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
     void Cleanup();
 };

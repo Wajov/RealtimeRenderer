@@ -27,8 +27,17 @@ void Renderer::InitWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
     window_ = glfwCreateWindow(width_, height_, "LearnVulkan", nullptr, nullptr);
+
+    glfwSetWindowUserPointer(window_, this);
+    glfwSetFramebufferSizeCallback(window_, FramebufferResizeCallback);
+}
+
+void Renderer::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+    auto renderer = reinterpret_cast<Renderer*>(glfwGetWindowUserPointer(window));
+    renderer->framebufferResized_ = true;
 }
 
 void Renderer::InitVulkan()
@@ -38,6 +47,7 @@ void Renderer::InitVulkan()
     CreateSurface();
     CreatePhysicalDevice();
     CreateDevice();
+    CreateMemoryAllocator();
     CreateSwapchain();
     CreateImageViews();
     CreateRenderPass();
@@ -45,6 +55,7 @@ void Renderer::InitVulkan()
     CreateFramebuffers();
     CreateCommandPool();
     CreateCommandBuffers();
+    CreateVertexBuffer();
     CreateSyncObjects();
 }
 
@@ -312,6 +323,17 @@ void Renderer::CreateDevice()
     vkGetDeviceQueue(device_, indices.presentFamilyIndex, 0, &presentQueue_);
 }
 
+void Renderer::CreateMemoryAllocator()
+{
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.vulkanApiVersion = VK_API_VERSION_1_0; // 或你使用的版本
+    allocatorInfo.physicalDevice = physicalDevice_;
+    allocatorInfo.device = device_;
+    allocatorInfo.instance = instance_;
+
+    VULKAN_CHECK(vmaCreateAllocator(&allocatorInfo, &allocator_));
+}
+
 void Renderer::CreateSwapchain()
 {
     SwapchainSupportDetails swapchainSupport = QuerySwapchainSupport(physicalDevice_);
@@ -369,6 +391,10 @@ VkExtent2D Renderer::ChooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capab
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
         return capabilities.currentExtent;
     } else {
+        int32_t width, height;
+        glfwGetFramebufferSize(window_, &width, &height);
+        width_ = width;
+        height_ = height;
         return {std::clamp(width_, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
             std::clamp(height_, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)};
     }
@@ -492,11 +518,15 @@ void Renderer::CreateGraphicsPipeline()
     fragShaderStageInfo.pName = "main";
 
     std::vector<VkPipelineShaderStageCreateInfo> shaderStages = {vertShaderStageInfo, fragShaderStageInfo};
+    auto vertexBindingDescription = Vertex::GetBindingDescription();
+    auto vertexAttributeDescriptions = Vertex::GetAttributeDescriptions();
 
     VkPipelineVertexInputStateCreateInfo vertexInputStateInfo{};
     vertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputStateInfo.vertexBindingDescriptionCount = 0;
-    vertexInputStateInfo.vertexAttributeDescriptionCount = 0;
+    vertexInputStateInfo.vertexBindingDescriptionCount = 1;
+    vertexInputStateInfo.pVertexBindingDescriptions = &vertexBindingDescription;
+    vertexInputStateInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttributeDescriptions.size());
+    vertexInputStateInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo{};
     inputAssemblyStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -653,6 +683,27 @@ void Renderer::CreateCommandBuffers()
     VULKAN_CHECK(vkAllocateCommandBuffers(device_, &allocateInfo, commandBuffers_.data()));
 }
 
+void Renderer::CreateVertexBuffer()
+{
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = sizeof(Vertex) * VERTICES.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo allocationInfo{};
+    allocationInfo.usage = VMA_MEMORY_USAGE_AUTO;
+    allocationInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+
+    VULKAN_CHECK(vmaCreateBuffer(allocator_, &bufferInfo, &allocationInfo, &vertexBuffer_, &vertexBufferAllocation_,
+        nullptr));
+
+    void* data;
+    vmaMapMemory(allocator_, vertexBufferAllocation_, &data);
+    memcpy(data, VERTICES.data(), static_cast<size_t>(bufferInfo.size));
+    vmaUnmapMemory(allocator_, vertexBufferAllocation_);
+}
+
 void Renderer::CreateSyncObjects()
 {
     imageAvailableSemaphores_.resize(MAX_FRAMES_IN_FLIGHT);
@@ -689,8 +740,17 @@ void Renderer::DrawFrame()
     vkResetFences(device_, 1, &inFlightFences_[currentFrame_]);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(device_, swapchain_, std::numeric_limits<uint64_t>::max(),
+    auto acquireResult = vkAcquireNextImageKHR(device_, swapchain_, std::numeric_limits<uint64_t>::max(),
         imageAvailableSemaphores_[currentFrame_], VK_NULL_HANDLE, &imageIndex);
+
+    if (acquireResult == VK_ERROR_OUT_OF_DATE_KHR) {
+        RecreateSwapchain();
+        return;
+    } else if (acquireResult != VK_SUCCESS && acquireResult != VK_SUBOPTIMAL_KHR) {
+        std::cerr << "Failed to acquire swapchain image" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     vkResetCommandBuffer(commandBuffers_[imageIndex], 0);
     RecordCommandBuffer(commandBuffers_[imageIndex], imageIndex);
 
@@ -716,9 +776,46 @@ void Renderer::DrawFrame()
     presentInfo.pSwapchains = &swapchain_;
     presentInfo.pImageIndices = &imageIndex;
 
-    VULKAN_CHECK(vkQueuePresentKHR(presentQueue_, &presentInfo));
+    auto presentResult = vkQueuePresentKHR(presentQueue_, &presentInfo);
+    if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR || framebufferResized_) {
+        framebufferResized_ = false;
+        RecreateSwapchain();
+    } else if (presentResult != VK_SUCCESS) {
+        std::cerr << "Failed to present swapchain image" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     currentFrame_ = (currentFrame_ + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::RecreateSwapchain()
+{
+    int32_t width = 0, height = 0;
+    while (width == 0 || height == 0) {
+        glfwGetFramebufferSize(window_, &width, &height);
+        glfwWaitEvents();
+    }
+
+    vkDeviceWaitIdle(device_);
+
+    CleanupSwapchain();
+
+    CreateSwapchain();
+    CreateImageViews();
+    CreateFramebuffers();
+}
+
+void Renderer::CleanupSwapchain()
+{
+    for (auto framebuffer : swapchainFramebuffers_) {
+        vkDestroyFramebuffer(device_, framebuffer, nullptr);
+    }
+
+    for (auto imageView : swapchainImageViews_) {
+        vkDestroyImageView(device_, imageView, nullptr);
+    }
+
+    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
 }
 
 void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
@@ -757,7 +854,11 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     scissor.extent = swapchainImageExtent_;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    std::vector<VkBuffer> vertexBuffers = {vertexBuffer_};
+    std::vector<VkDeviceSize> offsets = {0};
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers.data(), offsets.data());
+
+    vkCmdDraw(commandBuffer, static_cast<uint32_t>(VERTICES.size()), 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -766,28 +867,24 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 
 void Renderer::Cleanup()
 {
+    CleanupSwapchain();
+
     for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
         vkDestroyFence(device_, inFlightFences_[i], nullptr);
         vkDestroySemaphore(device_, renderFinishedSemaphores_[i], nullptr);
         vkDestroySemaphore(device_, imageAvailableSemaphores_[i], nullptr);
     }
 
-    vkDestroyCommandPool(device_, commandPool_, nullptr);
+    vmaDestroyBuffer(allocator_, vertexBuffer_, vertexBufferAllocation_);
 
-    for (auto framebuffer : swapchainFramebuffers_) {
-        vkDestroyFramebuffer(device_, framebuffer, nullptr);
-    }
+    vkDestroyCommandPool(device_, commandPool_, nullptr);
 
     vkDestroyPipeline(device_, graphicsPipeline_, nullptr);
     vkDestroyPipelineLayout(device_, pipelineLayout_, nullptr);
 
     vkDestroyRenderPass(device_, renderPass_, nullptr);
 
-    for (auto imageView : swapchainImageViews_) {
-        vkDestroyImageView(device_, imageView, nullptr);
-    }
-
-    vkDestroySwapchainKHR(device_, swapchain_, nullptr);
+    vmaDestroyAllocator(allocator_);
 
     vkDestroyDevice(device_, nullptr);
 

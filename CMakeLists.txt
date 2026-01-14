@@ -38,20 +38,22 @@ endforeach()
 add_custom_target(CompileShaders ALL DEPENDS ${SPIRV_FILES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
 
-# Vulkan
-find_package(Vulkan REQUIRED)
-
 # GLFW
 find_package(glfw3 REQUIRED)
 
-# Eigen
-find_package(Eigen3 REQUIRED)
+# glm
+find_package(glm REQUIRED)
 
-include_directories(
-    ${EIGEN3_INCLUDE_DIR}
-)
+# Vulkan
+find_package(Vulkan REQUIRED)
+
+# Vulkan-Memory-Allocator
+find_package(VulkanMemoryAllocator REQUIRED)
+
 target_link_libraries(
-    RealtimeRenderer
-    Vulkan::Vulkan
+    RealtimeRenderer PRIVATE
     glfw
+    glm::glm
+    Vulkan::Vulkan
+    GPUOpen::VulkanMemoryAllocator
 )
