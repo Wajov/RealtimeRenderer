@@ -6,7 +6,12 @@ if (WIN32)
         _USE_MATH_DEFINES
     )
 endif()
-add_compile_definitions(GLFW_INCLUDE_VULKAN)
+add_compile_definitions(
+    GLFW_INCLUDE_VULKAN
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_FORCE_RADIANS
+    STB_IMAGE_IMPLEMENTATION
+)
 
 project(RealtimeRenderer)
 
@@ -44,12 +49,16 @@ find_package(glfw3 REQUIRED)
 # glm
 find_package(glm REQUIRED)
 
+# stb
+find_package(stb REQUIRED)
+
 # Vulkan
 find_package(Vulkan REQUIRED)
 
 # Vulkan-Memory-Allocator
 find_package(VulkanMemoryAllocator REQUIRED)
 
+target_include_directories(RealtimeRenderer PRIVATE ${Stb_INCLUDE_DIR})
 target_link_libraries(
     RealtimeRenderer PRIVATE
     glfw

@@ -1,17 +1,17 @@
 #ifndef VERTEX_HPP
 #define VERTEX_HPP
 
-#include <array>
+#include <vector>
 
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
 
 struct Vertex {
-    glm::vec3 position;
-    glm::vec3 color;
+    glm::vec3 position, color;
+    glm::vec2 uv;
 
     static VkVertexInputBindingDescription GetBindingDescription();
-    static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions();
+    static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 };
 
 #endif
