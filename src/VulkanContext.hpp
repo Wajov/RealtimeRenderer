@@ -7,10 +7,23 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-#include "QueueFamilyIndices.hpp"
-#include "SwapchainSupportDetails.hpp"
-
 #define VULKAN_CHECK(val) VulkanContext::CheckResult((val), #val, __FILE__, __LINE__)
+
+struct SwapchainSupportDetails {
+    VkSurfaceCapabilitiesKHR capabilities;
+    std::vector<VkSurfaceFormatKHR> formats;
+    std::vector<VkPresentModeKHR> presentModes;
+};
+
+struct QueueFamilyIndices {
+    int32_t graphicsFamilyIndex = -1;
+    int32_t presentFamilyIndex = -1;
+
+    bool IsComplete() const
+    {
+        return graphicsFamilyIndex >= 0 && presentFamilyIndex >= 0;
+    }
+};
 
 class VulkanContext {
 public:

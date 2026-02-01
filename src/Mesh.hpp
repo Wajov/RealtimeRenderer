@@ -18,6 +18,8 @@ public:
     const std::vector<Vertex>& GetVertices() const;
     const std::vector<uint32_t>& GetIndices() const;
     void Bind();
+    VkDescriptorImageInfo GetTextureInfo() const;
+    void Render(VkCommandBuffer commandBuffer) const;
 
 private:
     void CreateVertexBuffer();

@@ -64,6 +64,24 @@ void Mesh::Bind()
     CreateTextureSampler();
 }
 
+VkDescriptorImageInfo Mesh::GetTextureInfo() const
+{
+    VkDescriptorImageInfo imageInfo{};
+    imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageInfo.imageView = textureImageView_;
+    imageInfo.sampler = textureSampler_;
+    return imageInfo;
+}
+
+void Mesh::Render(VkCommandBuffer commandBuffer) const
+{
+    VkDeviceSize offsets = 0;
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer_, &offsets);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
+
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(indices_.size()), 1, 0, 0, 0);
+}
+
 void Mesh::CreateVertexBuffer()
 {
     VulkanContext::Instance().CreateAndCopyBuffer(vertices_, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexBuffer_,

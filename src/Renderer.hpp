@@ -9,10 +9,12 @@
 #include <GLFW/glfw3.h>
 
 #include "Mesh.hpp"
-#include "QueueFamilyIndices.hpp"
-#include "SwapchainSupportDetails.hpp"
 #include "Vertex.hpp"
 #include "VulkanContext.hpp"
+
+struct UniformBufferObject {
+    glm::mat4 model, view, proj;
+};
 
 class Renderer {
 public:

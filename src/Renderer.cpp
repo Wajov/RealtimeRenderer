@@ -10,7 +10,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Image.hpp"
-#include "UniformBufferObject.hpp"
 
 Renderer::Renderer(uint32_t width, uint32_t height) :
     width_(width),
@@ -498,10 +497,7 @@ void Renderer::CreateDescriptorSets()
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
-        VkDescriptorImageInfo imageInfo{};
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = mesh_->textureImageView_;
-        imageInfo.sampler = mesh_->textureSampler_;
+        auto imageInfo = mesh_->GetTextureInfo();
 
         std::vector<VkWriteDescriptorSet> writeDescriptorSets(2);
 
@@ -686,14 +682,9 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     scissor.extent = swapchainImageExtent_;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    std::vector<VkBuffer> vertexBuffers = {mesh_->vertexBuffer_};
-    std::vector<VkDeviceSize> offsets = {0};
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers.data(), offsets.data());
-    vkCmdBindIndexBuffer(commandBuffer, mesh_->indexBuffer_, 0, VK_INDEX_TYPE_UINT32);
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout_, 0, 1,
         &descriptorSets_[imageIndex], 0, nullptr);
-
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh_->GetIndices().size()), 1, 0, 0, 0);
+    mesh_->Render(commandBuffer);
 
     vkCmdEndRenderPass(commandBuffer);
 
