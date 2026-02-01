@@ -13,8 +13,7 @@
 
 Renderer::Renderer(uint32_t width, uint32_t height) :
     width_(width),
-    height_(height),
-    window_(nullptr) {}
+    height_(height) {}
 
 Renderer::~Renderer() = default;
 

@@ -18,11 +18,6 @@ Image::~Image()
     stbi_image_free(pixels_);
 }
 
-bool Image::IsValid() const
-{
-    return isValid_;
-}
-
 int32_t Image::GetWidth() const
 {
     return width_;
