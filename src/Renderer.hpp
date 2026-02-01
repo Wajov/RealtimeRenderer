@@ -23,6 +23,7 @@ public:
 private:
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
+    std::shared_ptr<Mesh> mesh_;
     uint32_t width_, height_;
     GLFWwindow* window_;
     VkInstance instance_;
@@ -54,7 +55,6 @@ private:
     std::vector<VkFence> inFlightFences_;
     uint32_t currentFrame_ = 0;
     bool framebufferResized_ = false;
-    std::shared_ptr<Mesh> mesh_;
 
     void InitWindow();
     static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);

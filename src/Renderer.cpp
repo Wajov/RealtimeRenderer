@@ -548,7 +548,7 @@ void Renderer::CreateSyncObjects()
 
 void Renderer::InitScene()
 {
-    mesh_ = std::make_shared<Mesh>("model/marry/Marry.obj");
+    mesh_ = std::make_shared<Mesh>("model/marry/Marry.obj", "model/marry/MC003_Kozakura_Mari.png");
 }
 
 void Renderer::MainLoop()

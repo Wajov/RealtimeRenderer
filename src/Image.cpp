@@ -1,11 +1,16 @@
-#include <stb_image.h>
-
 #include "Image.hpp"
+
+#include <iostream>
+
+#include <stb_image.h>
 
 Image::Image(const std::string& path)
 {
     pixels_ = stbi_load(path.c_str(), &width_, &height_, &channels_, STBI_rgb_alpha);
-    isValid_ = (pixels_ != nullptr);
+    if (pixels_ == nullptr) {
+        std::cerr << "Failed to load image" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 }
 
 Image::~Image()

@@ -1,17 +1,17 @@
+#include "Mesh.hpp"
+
 #include <algorithm>
 #include <iostream>
 
 #include <tiny_obj_loader.h>
 
-#include "Mesh.hpp"
-
-Mesh::Mesh(const std::string& path)
+Mesh::Mesh(const std::string& meshPath, const std::string& texturePath)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, error;
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &error, path.c_str())) {
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &error, meshPath.c_str())) {
         std::cerr << "Load model failed: " << error << std::endl;
         exit(EXIT_FAILURE);
     }
@@ -27,6 +27,8 @@ Mesh::Mesh(const std::string& path)
             indices_.push_back(indices_.size());
         }
     }
+
+    texture_ = std::make_shared<Image>(texturePath);
 }
 
 Mesh::~Mesh()
@@ -76,15 +78,8 @@ void Mesh::CreateIndexBuffer()
 
 void Mesh::CreateTextureImage()
 {
-    auto textureImage = std::make_shared<Image>("model/marry/MC003_Kozakura_Mari.png");
-    if (!textureImage->IsValid()) {
-        std::cerr << "Failed to load texture image" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    VulkanContext::Instance().CreateAndCopyImage(textureImage->GetWidth(), textureImage->GetHeight(),
-        textureImage->GetChannels(), textureImage->GetPixels(), VK_IMAGE_USAGE_SAMPLED_BIT, textureImage_,
-        textureAllocation_);
+    VulkanContext::Instance().CreateAndCopyImage(texture_->GetWidth(), texture_->GetHeight(), texture_->GetChannels(),
+        texture_->GetPixels(), VK_IMAGE_USAGE_SAMPLED_BIT, textureImage_, textureAllocation_);
 }
 
 void Mesh::CreateTextureImageView()

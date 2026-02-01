@@ -12,7 +12,7 @@
 
 class Mesh {
 public:
-    Mesh(const std::string& path);
+    Mesh(const std::string& meshPath, const std::string& texturePath);
     ~Mesh();
 
     const std::vector<Vertex>& GetVertices() const;
@@ -28,6 +28,7 @@ private:
 
     std::vector<Vertex> vertices_;
     std::vector<uint32_t> indices_;
+    std::shared_ptr<Image> texture_;
 
 public:
     VkBuffer vertexBuffer_, indexBuffer_;
