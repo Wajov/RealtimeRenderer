@@ -7,7 +7,7 @@
 #include <vulkan/vulkan.h>
 
 struct Vertex {
-    glm::vec3 position, color;
+    glm::vec3 position;
     glm::vec2 uv;
 
     static VkVertexInputBindingDescription GetBindingDescription();

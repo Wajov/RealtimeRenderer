@@ -43,6 +43,9 @@ endforeach()
 add_custom_target(CompileShaders ALL DEPENDS ${SPIRV_FILES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
 
+# Assimp
+find_package(assimp REQUIRED)
+
 # GLFW
 find_package(glfw3 REQUIRED)
 
@@ -61,6 +64,7 @@ find_package(VulkanMemoryAllocator REQUIRED)
 target_include_directories(RealtimeRenderer PRIVATE ${Stb_INCLUDE_DIR})
 target_link_libraries(
     RealtimeRenderer PRIVATE
+    assimp::assimp
     glfw
     glm::glm
     Vulkan::Vulkan

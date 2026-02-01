@@ -2,15 +2,17 @@
 #define RENDERER_HPP
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <GLFW/glfw3.h>
 
+#include "Model.hpp"
 #include "QueueFamilyIndices.hpp"
 #include "SwapchainSupportDetails.hpp"
 #include "Vertex.hpp"
-#include "VulkanHelper.hpp"
+#include "VulkanContext.hpp"
 
 class Renderer {
 public:
@@ -19,28 +21,28 @@ public:
     void Run();
 
 private:
-#ifdef NDEBUG
-    const bool ENABLE_VALIDATION_LAYERS = false;
-#else
-    const bool ENABLE_VALIDATION_LAYERS = true;
-#endif
+// #ifdef NDEBUG
+//     const bool ENABLE_VALIDATION_LAYERS = false;
+// #else
+//     const bool ENABLE_VALIDATION_LAYERS = true;
+// #endif
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-    const std::vector<const char*> VALIDATION_LAYERS = {
-        "VK_LAYER_KHRONOS_validation"
-    };
-    const std::vector<const char*> SWAPCHAIN_EXTENSIONS = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    };
+    // const std::vector<const char*> VALIDATION_LAYERS = {
+    //     "VK_LAYER_KHRONOS_validation"
+    // };
+    // const std::vector<const char*> SWAPCHAIN_EXTENSIONS = {
+    //     VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    // };
     const std::vector<Vertex> VERTICES = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
+        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
+        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
+        {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f}},
+        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f}},
 
-        {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
+        {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
+        {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f}},
+        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f}}
     };
     const std::vector<uint32_t> INDICES = {
         0, 1, 2, 2, 3, 0,
@@ -50,12 +52,11 @@ private:
     uint32_t width_, height_;
     GLFWwindow* window_;
     VkInstance instance_;
-    VkDebugUtilsMessengerEXT messenger_;
     VkSurfaceKHR surface_;
-    VkPhysicalDevice physicalDevice_;
     VkDevice device_;
-    VmaAllocator allocator_;
     VkQueue graphicsQueue_, presentQueue_;
+    VmaAllocator allocator_;
+    VkCommandPool commandPool_;
     VkSwapchainKHR swapchain_;
     VkFormat swapchainImageFormat_;
     VkExtent2D swapchainImageExtent_;
@@ -70,7 +71,6 @@ private:
     VkPipelineLayout pipelineLayout_;
     VkPipeline graphicsPipeline_;
     std::vector<VkFramebuffer> swapchainFramebuffers_;
-    VkCommandPool commandPool_;
     std::vector<VkCommandBuffer> commandBuffers_;
     VkBuffer vertexBuffer_, indexBuffer_;
     VmaAllocation vertexAllocation_, indexAllocation_;
@@ -83,30 +83,11 @@ private:
     std::vector<VkFence> inFlightFences_;
     uint32_t currentFrame_ = 0;
     bool framebufferResized_ = false;
+    std::shared_ptr<Model> model_;
 
     void InitWindow();
     static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
     void InitVulkan();
-    void CreateInstance();
-    bool CheckValidationLayerSupport();
-    std::vector<const char*> GetRequiredExtensions();
-    void CreateValidationLayers();
-    static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
-        const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator,
-        VkDebugUtilsMessengerEXT* pMessenger);
-    static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger,
-        const VkAllocationCallbacks* pAllocator);
-    static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData);
-    void CreateSurface();
-    void CreatePhysicalDevice();
-    bool IsPhysicalDeviceSuitable(VkPhysicalDevice device);
-    bool CheckSwapchainExtensionSupport(VkPhysicalDevice device);
-    SwapchainSupportDetails QuerySwapchainSupport(VkPhysicalDevice device);
-    QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
-    void CreateDevice();
-    void CreateMemoryAllocator();
     void CreateSwapchain();
     VkExtent2D ChooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     VkSurfaceFormatKHR ChooseSwapchainFormat(const std::vector<VkSurfaceFormatKHR>& formats);
@@ -120,7 +101,6 @@ private:
     static std::vector<char> ReadFile(const std::string& fileName);
     VkShaderModule CreateShaderModule(const std::vector<char>& code);
     void CreateSwapchainFramebuffers();
-    void CreateCommandPool();
     void CreateCommandBuffers();
     void CreateVertexBuffer();
     void CreateIndexBuffer();
@@ -145,6 +125,7 @@ private:
     void CreateDescriptorPool();
     void CreateDescriptorSets();
     void CreateSyncObjects();
+    void InitScene();
     void MainLoop();
     void DrawFrame();
     void RecreateSwapchain();
