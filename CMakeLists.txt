@@ -11,6 +11,7 @@ add_compile_definitions(
     GLM_FORCE_DEPTH_ZERO_TO_ONE
     GLM_FORCE_RADIANS
     STB_IMAGE_IMPLEMENTATION
+    TINYOBJLOADER_IMPLEMENTATION
 )
 
 project(RealtimeRenderer)
@@ -43,9 +44,6 @@ endforeach()
 add_custom_target(CompileShaders ALL DEPENDS ${SPIRV_FILES})
 add_dependencies(${PROJECT_NAME} CompileShaders)
 
-# Assimp
-find_package(assimp REQUIRED)
-
 # GLFW
 find_package(glfw3 REQUIRED)
 
@@ -54,6 +52,9 @@ find_package(glm REQUIRED)
 
 # stb
 find_package(stb REQUIRED)
+
+# tinyobjloader
+find_package(tinyobjloader REQUIRED)
 
 # Vulkan
 find_package(Vulkan REQUIRED)
@@ -64,9 +65,9 @@ find_package(VulkanMemoryAllocator REQUIRED)
 target_include_directories(RealtimeRenderer PRIVATE ${Stb_INCLUDE_DIR})
 target_link_libraries(
     RealtimeRenderer PRIVATE
-    assimp::assimp
     glfw
     glm::glm
+    tinyobjloader::tinyobjloader
     Vulkan::Vulkan
     GPUOpen::VulkanMemoryAllocator
 )

@@ -21,9 +21,9 @@ Renderer::~Renderer() = default;
 
 void Renderer::Run()
 {
+    InitScene();
     InitWindow();
     InitVulkan();
-    InitScene();
     MainLoop();
     Cleanup();
 }
@@ -78,7 +78,6 @@ void Renderer::InitVulkan()
 
 void Renderer::CreateSwapchain()
 {
-    // SwapchainSupportDetails swapchainSupport = QuerySwapchainSupport(physicalDevice_);
     auto swapchainSupport = VulkanContext::Instance().GetSwapchainSupport();
 
     uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
@@ -91,7 +90,6 @@ void Renderer::CreateSwapchain()
     auto presentMode = ChooseSwapchainPresentMode(swapchainSupport.presentModes);
     swapchainImageExtent_ = ChooseSwapchainExtent(swapchainSupport.capabilities);
 
-    // QueueFamilyIndices indices = FindQueueFamilies(physicalDevice_);
     auto indices = VulkanContext::Instance().GetQueueFamilyIndices();
     std::vector<uint32_t> queueFamilyIndices = {
         static_cast<uint32_t>(indices.graphicsFamilyIndex),
@@ -476,16 +474,16 @@ void Renderer::CreateCommandBuffers()
 
 void Renderer::CreateVertexBuffer()
 {
-    CreateAndCopyBuffer(VERTICES, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexBuffer_, vertexAllocation_);
+    CreateAndCopyBuffer(mesh_->GetVertices(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertexBuffer_, vertexAllocation_);
 }
 
 void Renderer::CreateIndexBuffer()
 {
-    CreateAndCopyBuffer(INDICES, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexBuffer_, indexAllocation_);
+    CreateAndCopyBuffer(mesh_->GetIndices(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, indexBuffer_, indexAllocation_);
 }
 
 template<typename T>
-void Renderer::CreateAndCopyBuffer(std::vector<T> data, VkBufferUsageFlags usage, VkBuffer& buffer,
+void Renderer::CreateAndCopyBuffer(const std::vector<T>& data, VkBufferUsageFlags usage, VkBuffer& buffer,
     VmaAllocation& allocation)
 {
     VkDeviceSize bufferSize = sizeof(T) * data.size();
@@ -582,12 +580,11 @@ void Renderer::CreateUniformBuffers()
 
 void Renderer::CreateTextureImage()
 {
-    auto textureImage = std::make_shared<Image>("texture/texture.jpg");
+    auto textureImage = std::make_shared<Image>("model/marry/MC003_Kozakura_Mari.png");
     if (!textureImage->IsValid()) {
         std::cerr << "Failed to load texture image" << std::endl;
         exit(EXIT_FAILURE);
     }
-
 
     CreateAndCopyImage(textureImage->GetWidth(), textureImage->GetHeight(), textureImage->GetChannels(),
         textureImage->GetPixels(), VK_IMAGE_USAGE_SAMPLED_BIT, textureImage_, textureAllocation_);
@@ -822,8 +819,8 @@ void Renderer::CreateSyncObjects()
 
 void Renderer::InitScene()
 {
-    model_ = std::make_shared<Model>("model/marry/Marry.obj");
-    model_->Bind();
+    mesh_ = std::make_shared<Mesh>("model/marry/Marry.obj");
+    mesh_->Bind();
 }
 
 void Renderer::MainLoop()
@@ -968,7 +965,7 @@ void Renderer::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout_, 0, 1,
         &descriptorSets_[imageIndex], 0, nullptr);
 
-    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(INDICES.size()), 1, 0, 0, 0);
+    vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh_->GetIndices().size()), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -1030,7 +1027,7 @@ void Renderer::Cleanup()
     glfwTerminate();
 }
 
-template void Renderer::CreateAndCopyBuffer<Vertex>(std::vector<Vertex> data, VkBufferUsageFlags usage,
+template void Renderer::CreateAndCopyBuffer<Vertex>(const std::vector<Vertex>& data, VkBufferUsageFlags usage,
     VkBuffer& buffer, VmaAllocation& allocation);
-template void Renderer::CreateAndCopyBuffer<uint32_t>(std::vector<uint32_t> data, VkBufferUsageFlags usage,
+template void Renderer::CreateAndCopyBuffer<uint32_t>(const std::vector<uint32_t>& data, VkBufferUsageFlags usage,
     VkBuffer& buffer, VmaAllocation& allocation);

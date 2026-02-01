@@ -8,7 +8,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "Model.hpp"
+#include "Mesh.hpp"
 #include "QueueFamilyIndices.hpp"
 #include "SwapchainSupportDetails.hpp"
 #include "Vertex.hpp"
@@ -21,33 +21,7 @@ public:
     void Run();
 
 private:
-// #ifdef NDEBUG
-//     const bool ENABLE_VALIDATION_LAYERS = false;
-// #else
-//     const bool ENABLE_VALIDATION_LAYERS = true;
-// #endif
     const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-    // const std::vector<const char*> VALIDATION_LAYERS = {
-    //     "VK_LAYER_KHRONOS_validation"
-    // };
-    // const std::vector<const char*> SWAPCHAIN_EXTENSIONS = {
-    //     VK_KHR_SWAPCHAIN_EXTENSION_NAME
-    // };
-    const std::vector<Vertex> VERTICES = {
-        {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f}},
-        {{0.5f, -0.5f, 0.0f}, {0.0f, 0.0f}},
-        {{0.5f, 0.5f, 0.0f}, {0.0f, 1.0f}},
-        {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f}},
-
-        {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f}},
-        {{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f}},
-        {{0.5f, 0.5f, -0.5f}, {1.0f, 1.0f}},
-        {{-0.5f, 0.5f, -0.5f}, {0.0f, 1.0f}}
-    };
-    const std::vector<uint32_t> INDICES = {
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4
-    };
 
     uint32_t width_, height_;
     GLFWwindow* window_;
@@ -83,7 +57,7 @@ private:
     std::vector<VkFence> inFlightFences_;
     uint32_t currentFrame_ = 0;
     bool framebufferResized_ = false;
-    std::shared_ptr<Model> model_;
+    std::shared_ptr<Mesh> mesh_;
 
     void InitWindow();
     static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
@@ -105,7 +79,7 @@ private:
     void CreateVertexBuffer();
     void CreateIndexBuffer();
     template<typename T>
-    void CreateAndCopyBuffer(std::vector<T> data, VkBufferUsageFlags usage, VkBuffer& buffer,
+    void CreateAndCopyBuffer(const std::vector<T>& data, VkBufferUsageFlags usage, VkBuffer& buffer,
         VmaAllocation& allocation);
     void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaAllocationCreateFlagBits allocationFlags,
         VkBuffer& buffer, VmaAllocation& allocation);
