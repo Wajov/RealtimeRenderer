@@ -15,8 +15,6 @@ public:
     Mesh(const std::string& meshPath, const std::string& texturePath);
     ~Mesh();
 
-    const std::vector<Vertex>& GetVertices() const;
-    const std::vector<uint32_t>& GetIndices() const;
     void Bind();
     VkDescriptorImageInfo GetTextureInfo() const;
     void Render(VkCommandBuffer commandBuffer) const;
@@ -32,7 +30,6 @@ private:
     std::vector<uint32_t> indices_;
     std::shared_ptr<Image> texture_;
 
-public:
     VkBuffer vertexBuffer_, indexBuffer_;
     VmaAllocation vertexAllocation_, indexAllocation_, textureAllocation_;
     VkImage textureImage_;

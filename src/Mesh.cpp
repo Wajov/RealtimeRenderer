@@ -45,16 +45,6 @@ Mesh::~Mesh()
     vmaDestroyBuffer(allocator, vertexBuffer_, vertexAllocation_);
 }
 
-const std::vector<Vertex>& Mesh::GetVertices() const
-{
-    return vertices_;
-}
-
-const std::vector<uint32_t>& Mesh::GetIndices() const
-{
-    return indices_;
-}
-
 void Mesh::Bind()
 {
     CreateVertexBuffer();
