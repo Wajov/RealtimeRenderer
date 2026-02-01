@@ -28,6 +28,42 @@ public:
     VmaAllocator GetAllocator() const;
     VkCommandPool GetCommandPool() const;
 
+    template<typename T>
+    void CreateAndCopyBuffer(const std::vector<T>& data, VkBufferUsageFlags usage, VkBuffer& buffer,
+        VmaAllocation& allocation)
+    {
+        VkDeviceSize bufferSize = sizeof(T) * data.size();
+
+        VkBuffer stagingBuffer;
+        VmaAllocation stagingAllocation;
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT,
+            stagingBuffer, stagingAllocation);
+
+        void* stagingData;
+        vmaMapMemory(allocator_, stagingAllocation, &stagingData);
+        memcpy(stagingData, data.data(), static_cast<size_t>(bufferSize));
+        vmaUnmapMemory(allocator_, stagingAllocation);
+
+        CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, {}, buffer, allocation);
+
+        CopyBuffer(stagingBuffer, buffer, bufferSize);
+
+        vmaDestroyBuffer(allocator_, stagingBuffer, stagingAllocation);
+    }
+
+    void CreateAndCopyImage(uint32_t width, uint32_t height, uint32_t channels, unsigned char* pixels,
+        VkImageUsageFlagBits usage, VkImage& image, VmaAllocation& allocation);
+    void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaAllocationCreateFlagBits allocationFlags,
+        VkBuffer& buffer, VmaAllocation& allocation);
+    void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
+        VmaAllocationCreateFlagBits allocationFlags, VkImage& image, VmaAllocation& allocation);
+    VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectMask);
+    void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+    void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+    VkCommandBuffer BeginSingleTimeCommands();
+    void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+
 private:
     VulkanContext() = default;
     ~VulkanContext();

@@ -36,9 +36,9 @@ private:
     VkExtent2D swapchainImageExtent_;
     std::vector<VkImage> swapchainImages_;
     std::vector<VkImageView> swapchainImageViews_;
-    VkImage swapchainDepthImage_, textureImage_;
-    VmaAllocation swapchainDepthAllocation_, textureAllocation_;
-    VkImageView swapchainDepthImageView_, textureImageView_;
+    VkImage swapchainDepthImage_;
+    VmaAllocation swapchainDepthAllocation_;
+    VkImageView swapchainDepthImageView_;
     VkRenderPass renderPass_;
     VkShaderModule vertShaderModule_, fragShaderModule_;
     VkDescriptorSetLayout descriptorSetLayout_;
@@ -46,11 +46,8 @@ private:
     VkPipeline graphicsPipeline_;
     std::vector<VkFramebuffer> swapchainFramebuffers_;
     std::vector<VkCommandBuffer> commandBuffers_;
-    VkBuffer vertexBuffer_, indexBuffer_;
-    VmaAllocation vertexAllocation_, indexAllocation_;
     std::vector<VkBuffer> uniformBuffers_;
     std::vector<VmaAllocation> uniformAllocations_;
-    VkSampler textureSampler_;
     VkDescriptorPool descriptorPool_;
     std::vector<VkDescriptorSet> descriptorSets_;
     std::vector<VkSemaphore> imageAvailableSemaphores_, renderFinishedSemaphores_;
@@ -67,7 +64,6 @@ private:
     VkSurfaceFormatKHR ChooseSwapchainFormat(const std::vector<VkSurfaceFormatKHR>& formats);
     VkPresentModeKHR ChooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& presentModes);
     void CreateSwapchainImageViews();
-    VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectMask);
     void CreateSwapchainDepthResources();
     void CreateRenderPass();
     void CreateDescriptorSetLayout();
@@ -76,26 +72,7 @@ private:
     VkShaderModule CreateShaderModule(const std::vector<char>& code);
     void CreateSwapchainFramebuffers();
     void CreateCommandBuffers();
-    void CreateVertexBuffer();
-    void CreateIndexBuffer();
-    template<typename T>
-    void CreateAndCopyBuffer(const std::vector<T>& data, VkBufferUsageFlags usage, VkBuffer& buffer,
-        VmaAllocation& allocation);
-    void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VmaAllocationCreateFlagBits allocationFlags,
-        VkBuffer& buffer, VmaAllocation& allocation);
-    void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-    VkCommandBuffer BeginSingleTimeCommands();
-    void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
     void CreateUniformBuffers();
-    void CreateTextureImage();
-    void CreateAndCopyImage(uint32_t width, uint32_t height, uint32_t channels, unsigned char* pixels,
-        VkImageUsageFlagBits usage, VkImage& image, VmaAllocation& allocation);
-    void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage,
-        VmaAllocationCreateFlagBits allocationFlags, VkImage& image, VmaAllocation& allocation);
-    void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-    void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-    void CreateTextureImageView();
-    void CreateTextureSampler();
     void CreateDescriptorPool();
     void CreateDescriptorSets();
     void CreateSyncObjects();
